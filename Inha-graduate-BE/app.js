@@ -16,7 +16,7 @@ app.use(bodyParser.json()); // app에 body-parser의 json 미들웨어를 사용
 app.post('/savePersonality', savePersonality); // 사용자 취향(선호도)을 저장하는 api
 app.get('/readPersonality/:user_id', readPersonality); // 사용자 취향(선호도)을 가져오는 api
 
-const PORT = 3000;
+const PORT = 8001;
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });

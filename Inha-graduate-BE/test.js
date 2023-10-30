@@ -3,7 +3,7 @@
 const axios = require('axios');
 
 const userData = { // 사용자 데이터 저장
-    user_id: 12345, // 중복되지 않는 int 값
+    user_id: 4000, // 중복되지 않는 int 값
     travel_destination: "제주", // 여행지역
     start_day: "20231027", // 여행시작일
     finish_day: "20231028", // 여행종료일
@@ -23,11 +23,11 @@ const userData = { // 사용자 데이터 저장
     rank_meat: 6, // 음식_고기/구이 우선순위
     rank_hotel: 1, // 숙박_호텔 우선순위
     rank_motel: 2, // 숙박_모텔 우선순위
-    rank_pension: 3, // 숙박_펜션 우선순위
+    rank_pension: 3, // 숙박_펜션 우선순위s
     transportation: "자동차" // 교통수단
 };
 
-axios.post('http://localhost:3000/savePersonality', userData)
+axios.post('http://localhost:8001/savePersonality', userData)
     .then(response => {
         console.log(response.data);
     })

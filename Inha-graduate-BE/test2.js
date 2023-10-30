@@ -3,7 +3,7 @@ const fetch = require('node-fetch');
 
 async function fetchPersonality(userId) {
     try {
-        const response = await fetch(`http://localhost:3000/readPersonality/${userId}`);
+        const response = await fetch(`http://localhost:8001/readPersonality/${userId}`);
         const data = await response.json();
         const data_rank_pension = data.rank_pension
         if (response.ok) {
