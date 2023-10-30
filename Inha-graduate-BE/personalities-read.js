@@ -1,14 +1,7 @@
 // personality 컬렉션 데이터 조회(read)
-
-// Mongoose 연결 설정
-const mongoose = require('mongoose');
 const Personalities = require('./personalities-definition');
 
-const uri = `mongodb+srv://admin:inha2023@cluster0.nv39mvs.mongodb.net/inha-graduate?retryWrites=true&w=majority`;
-
-mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-
-async function readPersonality(req, res) {
+async function readPersonality(req, res) { // 비동기적 동작
     const userId = req.params.user_id; // 요청에서 user_id 파라미터를 가져오기
 
     try {
