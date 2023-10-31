@@ -3,12 +3,12 @@ const Personalities = require('./personalities-definition.js');
 
 async function setUserDestinationRank(userId) {
     try {
-        const user = Personalities.findOne({ user_id: userId }); // 해당 userId의 personalities 데이터를 가져온다.
+        const user = await Personalities.findOne({ user_id: userId }); // 해당 userId의 personalities 데이터를 가져온다.
         if (!user) { // 유저가 존재하지 않는 경우
             return null; // null 값 리턴
         }
         // 여행지 우선순위 이름을 저장하는 destinationTypes
-        const destinationTypes = ["rank_mountain", "rank_sea", "rank_valley", "rank_historicalTheme", "rank_experienceTheme", "rank_buildingTheme", "rank_cafe"];
+        const destinationTypes = ["rank_mountain", "rank_sea", "rank_historicalTheme", "rank_experienceTheme", "rank_buildingTheme", "rank_cafe"];
         let invertedRanks = {}; // 역수 값을 저장
 
         // 1. 각 rank 값의 역수를 계산 (낮은 rank 일수록 더 많은 여행지를 추천해야 하므로)

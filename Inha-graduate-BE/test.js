@@ -9,8 +9,7 @@ const userData = { // 사용자 데이터 저장
     travel_day: 3, // 여행일
     rank_mountain: 2, // 여행지_산 우선순위
     rank_sea: 1, // 여행지_바다 우선순위
-    rank_valley: 3, // 여행지_계곡 우선순위
-    rank_historicalTheme: 4, // 여행지_역사관광지 우선순위
+    rank_historicalTheme: 3, // 여행지_역사관광지 우선순위
     rank_experienceTheme: 0, // 여행지_체험관광지 우선순위
     rank_buildingTheme: 0, // 여행지_건축/조형물 우선순위
     rank_cafe: 0, // 여행지_카페 우선순위

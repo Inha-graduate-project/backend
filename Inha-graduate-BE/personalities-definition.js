@@ -12,7 +12,6 @@ const personalitiesSchema = new Schema({
     travel_day: { type: Number, required: true }, // 여행일(당일치기는 1, 1박 2일은 2, 2박 3일은 3)
     rank_mountain: { type: Number, required: true }, // 여행지_산 우선순위
     rank_sea: { type: Number, required: true }, // 여행지_바다 우선순위
-    rank_valley: { type: Number, required: true }, // 여행지_계곡 우선순위
     rank_historicalTheme: { type: Number, required: true }, // 여행지_역사관광지 우선순위
     rank_experienceTheme: { type: Number, required: true }, // 여행지_체험관광지 우선순위
     rank_buildingTheme: { type: Number, required: true }, // 여행지_건축/조형물 우선순위
