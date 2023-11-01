@@ -12,8 +12,9 @@ async function test() {
     console.log(user_rank.rank_mountain) // rank_mountain의 count와 rank 값 출력
     user_rank_count = user_rank.rank_mountain.count;
     user_rank_rank = user_rank.rank_mountain.rank;
-    console.log(user_rank_count) // rank_mountain의 여행지 갯수
-    console.log(user_rank_rank) // rank_mountain의 여행지 우선순위
+    console.log(user_rank_count); // rank_mountain의 여행지 갯수
+    console.log(user_rank_rank); // rank_mountain의 여행지 우선순위
+    console.log(user_rank.rank_mountain.keywords);
     mongoose.connection.close(); // MongoDB 연결 종료
 }
 

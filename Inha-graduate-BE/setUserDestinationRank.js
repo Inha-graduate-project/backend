@@ -71,10 +71,19 @@ async function setUserDestinationRank(userId) {
             }
         }
 
+        const keywords = { // 여행 키워드
+            rank_mountain: ['산', '국립공원', '수목원', '식물원', '계곡'],
+            rank_sea: ['해수욕장'],
+            rank_historicalTheme: ['문화유적', '박물관'],
+            rank_experienceTheme: ['체험학습장', '체험마을'],
+            rank_buildingTheme: ['전망대', '석탑'],
+            rank_cafe: ['카페']
+        };
+
         let result = {}; // 여행지 개수 및 rank를 저장하는 result
-        for (let i = 0; i < destinationTypes.length; i++) { // 여행지 개수 및 rank 저장
+        for (let i = 0; i < destinationTypes.length; i++) { // 여행지 개수 및 rank, 여행 키워드 저장
             let type = destinationTypes[i];
-            result[type] = { count: counts[type], rank: user[type] };
+            result[type] = { count: counts[type], rank: user[type], keywords: keywords[type] };
         }
 
         return result;

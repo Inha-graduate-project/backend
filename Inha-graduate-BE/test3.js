@@ -9,7 +9,7 @@ const setUserFoodRank = require('./setUserFoodRank.js')
 
 async function test() {
     const user_rank = await setUserFoodRank(11111);
-    console.log(user_rank.rank_koreanfood) // rank_mountain의 count와 rank 값 출력
+    console.log(user_rank) // rank_mountain의 count와 rank 값 출력
     user_rank_count = user_rank.rank_koreanfood.count;
     user_rank_rank = user_rank.rank_koreanfood.rank;
     console.log(user_rank_count) // rank_mountain의 여행지 갯수
