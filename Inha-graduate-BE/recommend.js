@@ -14,10 +14,11 @@ async function selectDestination(userId) {
         if (!user) { // 유저가 존재하지 않는 경우
             return null; // null 값 리턴
         }
-        const travel_day = user.travel_day; // 여행일
-
+        //const travel_day = user.travel_day; // 여행일
+        const travel_day = 2;
+        const travel_destination = user.travel_destination;
         // 시작 좌표 설정
-        let startpoint_name = user.travel_destination + "버스터미널"; // 시작좌표 이름(지역 + 버스터미널)
+        let startpoint_name = travel_destination + "버스터미널"; // 시작좌표 이름(지역 + 버스터미널)
         let startpoint_apiUrl = 'https://maps.googleapis.com/maps/api/place/findplacefromtext/json'; // google api Url
         let startpoint_response = await axios.get(startpoint_apiUrl, { // api 호출
             params: {
@@ -27,63 +28,437 @@ async function selectDestination(userId) {
                 key: googleMapApiKey,
             }
         })
-        const startpoint_places = startpoint_response.data.candidates;
-        const startpoint_location = startpoint_places[0].geometry.location;
-        const startpoint_address = startpoint_places[0].formatted_address; // 주소 
+        const startpoint_places = startpoint_response.data.candidates; // 시작 장소 정보를 가져오는 값
+        const startpoint_location = startpoint_places[0].geometry.location; // 시작 위치 위도/경도 정보
+        const startpoint_address = startpoint_places[0].formatted_address; // 시작 위치 주소 정보
         console.log(`Latitude: ${startpoint_location.lat}, Longitude: ${startpoint_location.lng}`);
         let latitude = startpoint_location.lat // 시작 좌표 위도
         let longitude = startpoint_location.lng // 시작 좌표 경도
         let radius = 5000; // 반경 5km
         const results = []; // 결과를 저장하는 배열
-        results.push({ seq: 0, name: startpoint_name, latitude: latitude, longitude: longitude, address: startpoint_address });
-        console.log(results)
+        results.push({ seq: 0, day: 1, name: startpoint_name, latitude: latitude, longitude: longitude, address: startpoint_address });
+        //console.log(results[0])
         //const user_rankDestinationData = setUserDestinationRank(userId); // 여행지 추천 갯수를 가져오고, 저장하는 data
         //const user_rankFoodData = setUserFoodRank(userId); // 음식 추천 갯수를 가져오고, 저장하는 data
         user_rankDestinationData = {
             rank_mountain: { count: 3, rank: 1, keywords: ['산', '국립공원', '수목원', '식물원', '계곡'] },
             rank_sea: { count: 2, rank: 2, keywords: ['해수욕장'] },
-            rank_historicalTheme: { count: 1, rank: 4, keywords: ['문화유적', '박물관'] },
-            rank_experienceTheme: { count: 1, rank: 5, keywords: ['체험학습장', '체험마을'] },
-            rank_buildingTheme: { count: 0, rank: 6, keywords: ['전망대', '석탑'] },
-            rank_cafe: { count: 1, rank: 3, keywords: ['카페'] },
+            rank_historicalTheme: { count: 1, rank: 3, keywords: ['문화유적', '박물관'] },
+            rank_experienceTheme: { count: 1, rank: 4, keywords: ['체험학습장', '체험마을'] },
+            rank_buildingTheme: { count: 1, rank: 5, keywords: ['전망대', '석탑'] },
+            rank_cafe: { count: 0, rank: 6, keywords: ['카페'] },
         };
         user_rankFoodData = {
             rank_koreanfood: { count: 2, rank: 1, keywords: ['한식'] },
-            rank_japanesefood: { count: 1, rank: 2, keywords: ['일식'] },
+            rank_japanesefood: { count: 2, rank: 2, keywords: ['일식'] },
             rank_chinesefood: { count: 1, rank: 3, keywords: ['중식'] },
             rank_westernfood: { count: 1, rank: 4, keywords: ['양식'] },
-            rank_fastfood: { count: 1, rank: 5, keywords: ['패스트푸드'] },
+            rank_fastfood: { count: 0, rank: 5, keywords: ['패스트푸드'] },
             rank_meat: { count: 0, rank: 6, keywords: ['구이'] }
         };
         user_rankAccommodationData = {
             rank_hotel: { count: 1, rank: 1, keywords: ['호텔'] },
-            rank_motel: { count: 1, rank: 2, keywords: ['모텔'] },
+            rank_motel: { count: 0, rank: 2, keywords: ['모텔'] },
             rank_pension: { count: 0, rank: 3, keywords: ['펜션'] }
         };
+        // 여행지, 음식점, 숙소 순서 정렬
         const sortedDestinationKeywords = Object.entries(user_rankDestinationData)
-            .filter(([key, value]) => value.count > 0) //count가 0인지 체크
-            .sort((a, b) => a[1].rank - b[1].rank); //rank 오름차순으로 정렬
+            .filter(([, value]) => value.count > 0)
+            .sort((a, b) => a[1].rank - b[1].rank);
 
         const sortedFoodKeywords = Object.entries(user_rankFoodData)
-            .filter(([key, value]) => value.count > 0) //count가 0인지 체크
+            .filter(([, value]) => value.count > 0) //count가 0인지 체크
             .sort((a, b) => a[1].rank - b[1].rank); //rank 오름차순으로 정렬
 
         const sortedAccommodationKeywords = Object.entries(user_rankAccommodationData)
-            .filter(([key, value]) => value.count > 0) //count가 0인지 체크
+            .filter(([, value]) => value.count > 0) //count가 0인지 체크
             .sort((a, b) => a[1].rank - b[1].rank); //rank 오름차순으로 정렬
 
         // 여행지 추천 과정 구현
         // travel_day에 따라 나누기(당일치기인지, 1박2일인지, 2박3일인지 분류)
-        if (travel_day === 1) {
 
+        // 당일치기인 경우
+        if (travel_day === 1) {
+            let seq_value = 1; // 시퀀스(순서 값)
+            let day = 1; // 여행 일차
+            // 1. 여행지 4곳 추천
+            while (true) {
+                for (const [, value] of sortedDestinationKeywords) {
+                    if (value.count === 0) {
+                        continue; // count가 0인 키워드는 건너뛰기
+                    }
+                    for (const keyword of value.keywords) {
+                        if (value.count === 0) {
+                            break; // count가 0이면 종료
+                        }
+                        let searchvalue = await searchKeyword(latitude, longitude, results, radius, keyword); // 여행지 탐색
+                        console.log('여행지 탐색 시작', keyword)
+                        if (searchvalue[0].result_value === 1) { // 여행지 값이 존재하면
+                            value.count--; // 해당 여행 카테고리의 count 1 감소
+                            results.push({ // 여행지 값 저장
+                                seq: seq_value, day: 1, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
+                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                            })
+                            seq_value = seq_value + 1; // 시퀀스 번호 증가
+                            break; // for문 종료
+                        }
+                        else { // 여행지 값이 존재하지 않으면
+                            let else_found = 0
+                            while (!else_found) { // 여행지를 찾을 때까지 반복
+                                radius = radius + 5000; // 반경 5km 증가
+                                searchvalue = await searchKeyword(latitude, longitude, results, radius, keyword); // 여행지 재탐색
+                                if (searchvalue[0].result_value === 1) { // 여행지 값이 존재하면
+                                    value.count--; // 해당 여행 카테고리의 count 1 감소
+                                    results.push({ // 여행지 값 저장
+                                        seq: seq_value, day: 1, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
+                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                    })
+                                    seq_value = seq_value + 1; // 시퀀스 값 증가
+                                    radius = 5000; // 여행지 검색 반경을 5km로 다시 복귀
+                                    break; // 종료
+                                }
+                            }
+                            break; // for문 종료
+                        }
+                    }
+                }
+                if (seq_value === 5) { // 여행지 4곳을 추천했다면,
+                    break; // 여행지 추천은 종료 (while문 탈출)
+                }
+            }
+            // 2. 음식점 3곳 추천
+            while (true) {
+                for (const [, value] of sortedFoodKeywords) {
+                    if (value.count === 0) {
+                        continue; // count가 0인 키워드는 건너뛰기
+                    }
+                    for (const keyword of value.keywords) {
+                        if (value.count === 0) {
+                            break; // count가 0이면 종료
+                        }
+                        console.log('음식점 탐색 시작', keyword)
+                        let searchvalue = await searchKeyword(latitude, longitude, results, radius, keyword); // 음식점 탐색
+                        if (searchvalue[0].result_value === 1) { // 음식점 값을 찾으면
+                            value.count--; // 해당 여행 카테고리의 count 1 감소
+                            results.push({ // 음식점 값 저장
+                                seq: seq_value, day: 1, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
+                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                            })
+                            seq_value = seq_value + 1; // 시퀀스 값 증가
+                            break; // for문 종료
+                        }
+                        else { // 음식점 값이 존재하지 않으면
+                            let else_found = 0
+                            while (!else_found) { // 음식점을 찾을 때까지 반복
+                                radius = radius + 5000; // 반경 5km 증가
+                                searchvalue = await searchKeyword(latitude, longitude, results, radius, keyword);
+                                if (searchvalue[0].result_value === 1) { // 음식점 값을 찾으면
+                                    value.count--; // 해당 여행 카테고리의 count 1 감소
+                                    results.push({ // 음식점 값 저장
+                                        seq: seq_value, day: 1, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
+                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                    })
+                                    seq_value = seq_value + 1; // 시퀀스 값 증가
+                                    radius = 5000; // 음식점 검색 반경을 5km로 다시 복귀
+                                    break; // 종료
+                                }
+                            }
+                            break; // for문 종료
+                        }
+                    }
+                }
+                if (seq_value === 8) { // 음식점 3곳을 추천했다면,
+                    break; // 종료
+                }
+            }
         }
         else if (travel_day === 2) {
-
+            let seq_value = 1; // 시퀀스(순서 값)
+            let day = 1; // 여행 일차
+            // 1일차 시작
+            // 1일차 여행지 4곳 추천
+            while (true) {
+                for (const [, value] of sortedDestinationKeywords) {
+                    if (value.count === 0) {
+                        continue; // count가 0인 키워드는 건너뛰기
+                    }
+                    for (const keyword of value.keywords) {
+                        if (value.count === 0) {
+                            break; // count가 0이면 종료
+                        }
+                        console.log('여행지1 탐색 시작', keyword)
+                        let searchvalue = await searchKeyword(latitude, longitude, results, radius, keyword); // 여행지 탐색
+                        if (searchvalue[0].result_value === 1) { // 여행지 값이 존재하면
+                            value.count--; // 해당 여행 카테고리의 count 1 감소
+                            results.push({ // 여행지 값 저장
+                                seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
+                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                            })
+                            seq_value = seq_value + 1; // 시퀀스 번호 증가
+                            break; // for문 종료
+                        }
+                        else { // 여행지 값이 존재하지 않으면
+                            let else_found = 0
+                            while (!else_found) { // 여행지를 찾을 때까지 반복
+                                radius = radius + 5000; // 반경 5km 증가
+                                searchvalue = await searchKeyword(latitude, longitude, results, radius, keyword); // 여행지 재탐색
+                                if (searchvalue[0].result_value === 1) { // 여행지 값이 존재하면
+                                    value.count--; // 해당 여행 카테고리의 count 1 감소
+                                    results.push({ // 여행지 값 저장
+                                        seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
+                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                    })
+                                    seq_value = seq_value + 1; // 시퀀스 값 증가
+                                    radius = 5000; // 여행지 검색 반경을 5km로 다시 복귀
+                                    break; // 종료
+                                }
+                            }
+                            break; // for문 종료
+                        }
+                    }
+                    if (seq_value === 5) { // 여행지 4곳을 추천했다면,
+                        break; // 여행지 추천은 종료 (while문 탈출)
+                    }
+                }
+                if (seq_value === 5) { // 여행지 4곳을 추천했다면,
+                    break; // 여행지 추천은 종료 (while문 탈출)
+                }
+            }
+            // 1일차 음식점 3곳 추천
+            while (true) {
+                for (const [, value] of sortedFoodKeywords) {
+                    if (value.count === 0) {
+                        continue; // count가 0인 키워드는 건너뛰기
+                    }
+                    for (const keyword of value.keywords) {
+                        if (value.count === 0) {
+                            break; // count가 0이면 종료
+                        }
+                        console.log('음식점1 탐색 시작', keyword)
+                        let searchvalue = await searchKeyword(latitude, longitude, results, radius, keyword); // 음식점 탐색
+                        if (searchvalue[0].result_value === 1) { // 음식점 값을 찾으면
+                            value.count--; // 해당 여행 카테고리의 count 1 감소
+                            results.push({ // 음식점 값 저장
+                                seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
+                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                            })
+                            seq_value = seq_value + 1; // 시퀀스 값 증가
+                            break; // for문 종료
+                        }
+                        else { // 음식점 값이 존재하지 않으면
+                            let else_found = 0
+                            while (!else_found) { // 음식점을 찾을 때까지 반복
+                                radius = radius + 5000; // 반경 5km 증가
+                                searchvalue = await searchKeyword(latitude, longitude, results, radius, keyword);
+                                if (searchvalue[0].result_value === 1) { // 음식점 값을 찾으면
+                                    value.count--; // 해당 여행 카테고리의 count 1 감소
+                                    results.push({ // 음식점 값 저장
+                                        seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
+                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                    })
+                                    seq_value = seq_value + 1; // 시퀀스 값 증가
+                                    radius = 5000; // 음식점 검색 반경을 5km로 다시 복귀
+                                    break; // 종료
+                                }
+                            }
+                            break; // for문 종료
+                        }
+                    }
+                    if (seq_value === 8) { // 음식점 3곳을 추천했다면,
+                        break; // 종료
+                    }
+                }
+                if (seq_value === 8) { // 음식점 3곳을 추천했다면,
+                    break; // 종료
+                }
+            }
+            // 1일차 숙소 추천
+            while (true) {
+                for (const [, value] of sortedAccommodationKeywords) {
+                    if (value.count === 0) {
+                        continue; // count가 0인 키워드는 건너뛰기
+                    }
+                    for (const keyword of value.keywords) {
+                        if (value.count === 0) {
+                            break; // count가 0이면 종료
+                        }
+                        console.log('숙소1 탐색 시작', keyword)
+                        let searchvalue = await searchKeyword(latitude, longitude, results, radius, keyword); // 숙소 탐색
+                        if (searchvalue[0].result_value === 1) { // 숙소 값을 찾으면
+                            value.count--; // 해당 숙소 카테고리의 count 1 감소
+                            results.push({ // 숙소 값 저장
+                                seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
+                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                            })
+                            seq_value = seq_value + 1; // 시퀀스 값 증가
+                            break; // for문 종료
+                        }
+                        else { // 숙소 값이 존재하지 않으면
+                            let else_found = 0
+                            while (!else_found) { // 숙소를 찾을 때까지 반복
+                                radius = radius + 5000; // 반경 5km 증가
+                                searchvalue = await searchKeyword(latitude, longitude, results, radius, keyword);
+                                if (searchvalue[0].result_value === 1) { // 숙소 값을 찾으면
+                                    value.count--; // 해당 숙소 카테고리의 count 1 감소
+                                    results.push({ // 숙소 값 저장
+                                        seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
+                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                    })
+                                    seq_value = seq_value + 1; // 시퀀스 값 증가
+                                    radius = 5000; // 숙소 검색 반경을 5km로 다시 복귀
+                                    break; // 종료
+                                }
+                            }
+                            break; // for문 종료
+                        }
+                    }
+                    if (seq_value === 9) { // 숙소 1곳을 추천했다면,
+                        break; // 종료
+                    }
+                }
+                if (seq_value === 9) { // 숙소 1곳을 추천했다면,
+                    break; // 종료
+                }
+            }
+            day = day + 1; // 1일차 종료, 날짜 하루 증가
+            // 1일차 끝
+            // 2일차 시작
+            // 2일차 여행지 추천
+            while (true) {
+                for (const [, value] of sortedDestinationKeywords) {
+                    if (value.count === 0) {
+                        continue; // count가 0인 키워드는 건너뛰기
+                    }
+                    if (seq_value === 9) { // 2일차 첫 번째 여행지 추천이라면
+                        for (const keyword of value.keywords) {
+                            console.log('여행지2-1 탐색 시작', keyword)
+                            let searchvalue = await searchKeywordWithLocation(travel_destination, results, radius, keyword); // 여행지 탐색을 지역 명으로 진행
+                            if (searchvalue[0].result_value === 1) { // 여행지 값이 존재하면
+                                value.count--; // 해당 여행 카테고리의 count 1 감소
+                                latitude = searchvalue[0].latitude; // 중심좌표 위도 수정(2번째 날의 첫번째 여행지로)
+                                longitude = searchvalue[0].longitude; // 중심좌표 경도 수정(2번째 날의 첫번째 여행지로)
+                                results.push({ // 여행지 값 저장
+                                    seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
+                                    longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                })
+                                seq_value = seq_value + 1; // 시퀀스 번호 증가
+                                break; // for문 종료
+                            }
+                            else { // 여행지 값이 존재하지 않으면
+                                let else_found = 0
+                                console.log('여행지2-1 재탐색 시작', keyword)
+                                while (!else_found) { // 여행지를 찾을 때까지 반복
+                                    radius = radius + 5000; // 반경 5km 증가
+                                    console.log('여행지2-1 재탐색 반경', radius)
+                                    searchvalue = await searchKeywordWithLocation(travel_destination, results, radius, keyword); // 여행지 탐색을 지역 명으로 진행
+                                    if (searchvalue[0].result_value === 1) { // 여행지 값이 존재하면
+                                        value.count--; // 해당 여행 카테고리의 count 1 감소
+                                        latitude = searchvalue[0].latitude; // 중심좌표 위도 수정(2번째 날의 첫번째 여행지로)
+                                        longitude = searchvalue[0].longitude; // 중심좌표 경도 수정(2번째 날의 첫번째 여행지로)
+                                        results.push({ // 여행지 값 저장
+                                            seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
+                                            longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                        })
+                                        seq_value = seq_value + 1; // 시퀀스 값 증가
+                                        radius = 5000; // 여행지 검색 반경을 5km로 다시 복귀
+                                        else_found = 1; // 종료
+                                    }
+                                }
+                                break; // for문 종료
+                            }
+                        }
+                    }
+                    else {
+                        for (const keyword of value.keywords) {
+                            if (value.count === 0) {
+                                break; // count가 0이면 종료
+                            }
+                            console.log('여행지2-2 탐색 시작', keyword)
+                            let searchvalue = await searchKeyword(latitude, longitude, results, radius, keyword); // 여행지 탐색
+                            if (searchvalue[0].result_value === 1) { // 여행지 값이 존재하면
+                                value.count--; // 해당 여행 카테고리의 count 1 감소
+                                results.push({ // 여행지 값 저장
+                                    seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
+                                    longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                })
+                                seq_value = seq_value + 1; // 시퀀스 번호 증가
+                                break; // for문 종료
+                            }
+                            else { // 여행지 값이 존재하지 않으면
+                                let else_found = 0
+                                while (!else_found) { // 여행지를 찾을 때까지 반복
+                                    radius = radius + 5000; // 반경 5km 증가
+                                    searchvalue = await searchKeyword(latitude, longitude, results, radius, keyword); // 여행지 재탐색
+                                    if (searchvalue[0].result_value === 1) { // 여행지 값이 존재하면
+                                        value.count--; // 해당 여행 카테고리의 count 1 감소
+                                        results.push({ // 여행지 값 저장
+                                            seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
+                                            longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                        })
+                                        seq_value = seq_value + 1; // 시퀀스 값 증가
+                                        radius = 5000; // 여행지 검색 반경을 5km로 다시 복귀
+                                        break; // 종료
+                                    }
+                                }
+                                break; // for문 종료
+                            }
+                        }
+                    }
+                }
+                if (seq_value === 13) { // 여행지 4곳을 추천했다면,
+                    break; // 여행지 추천은 종료 (while문 탈출)
+                }
+            }
+            // 2일차 음식점 추천
+            while (true) {
+                for (const [, value] of sortedFoodKeywords) {
+                    if (value.count === 0) {
+                        continue; // count가 0인 키워드는 건너뛰기
+                    }
+                    for (const keyword of value.keywords) {
+                        if (value.count === 0) {
+                            break; // count가 0이면 종료
+                        }
+                        console.log('음식점2 탐색 시작', keyword)
+                        let searchvalue = await searchKeyword(latitude, longitude, results, radius, keyword); // 음식점 탐색
+                        if (searchvalue[0].result_value === 1) { // 음식점 값을 찾으면
+                            value.count--; // 해당 여행 카테고리의 count 1 감소
+                            results.push({ // 음식점 값 저장
+                                seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
+                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                            })
+                            seq_value = seq_value + 1; // 시퀀스 값 증가
+                            break; // for문 종료
+                        }
+                        else { // 음식점 값이 존재하지 않으면
+                            let else_found = 0
+                            while (!else_found) { // 음식점을 찾을 때까지 반복
+                                radius = radius + 5000; // 반경 5km 증가
+                                searchvalue = await searchKeyword(latitude, longitude, results, radius, keyword);
+                                if (searchvalue[0].result_value === 1) { // 음식점 값을 찾으면
+                                    value.count--; // 해당 여행 카테고리의 count 1 감소
+                                    results.push({ // 음식점 값 저장
+                                        seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
+                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                    })
+                                    seq_value = seq_value + 1; // 시퀀스 값 증가
+                                    radius = 5000; // 음식점 검색 반경을 5km로 다시 복귀
+                                    break; // 종료
+                                }
+                            }
+                            break; // for문 종료
+                        }
+                    }
+                }
+                if (seq_value === 16) { // 음식점 3곳을 추천했다면,
+                    break; // 종료
+                }
+            }
         }
         else if (travel_day === 3) {
 
         }
-
+        console.log(results)
     }
     catch (error) {
         console.error('여행지 추천 중 오류가 발생했습니다: ', error);
@@ -95,24 +470,27 @@ selectDestination(11111);
 
 
 // 특정 키워드에 대한 검색 함수
-async function searchKeyword(latitude, longitude, radius, results, keyword) {
+async function searchKeyword(latitude, longitude, result, radius, keyword) {
     const apiUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${radius}&keyword=${keyword}&key=${googleMapApiKey}`;
-
+    let result_list = [];
     try {
-        const response = await axios.get(apiUrl);
+        const response = await axios.get(apiUrl, {
+            headers: {
+                'Accept-Language': 'ko'
+            }
+        });
         const data = response.data;
-
         // place_id가 이미 results 배열에 있는지 확인
         if (data.results.length > 0) {
             for (const place of data.results) {
                 const rating = place.rating || 0;
 
-                // place_id가 이미 results 배열에 있는지 확인
-                if (rating >= 1 && !results.find(result => result.place_id === place.place_id)) {
-                    console.log(`${keyword} 목적지: ${place.name}, 별점: ${rating}`);
-
+                // place_id가 이미 result 배열에 있는지 확인
+                if (rating >= 1 && !result.find(result => result.place_id === place.place_id)) {
+                    //console.log(`${keyword} 목적지: ${place.name}, 별점: ${rating}`);
                     // 결과 배열에 장소 이름, 별점, 위도, 경도, 주소, 그리고 place_id 저장
-                    results.push({
+                    result_list.push({
+                        result_value: 1,
                         name: place.name,
                         rating: place.rating,
                         latitude: place.geometry.location.lat,
@@ -120,58 +498,65 @@ async function searchKeyword(latitude, longitude, radius, results, keyword) {
                         address: place.vicinity,
                         place_id: place.place_id
                     });
-
-                    return true;
+                    return result_list
                 }
             }
         } else {
-            console.log(`${keyword} 목적지 검색 결과가 없습니다.`);
+            //console.log(`${keyword} 목적지 검색 결과가 없습니다.`);
+            result_list.push({
+                result_value: 0
+            })
         }
     } catch (error) {
-        console.error(`에러 발생: ${error.message}`);
+        //console.error(`에러 발생: ${error.message}`);
+        result_list.push({
+            result_value: 0
+        })
     }
-
-    return false;
+    return result_list;
 }
 
-async function processKeywords() {
-    const sortedKeywords = Object.entries(data)
-        .filter(([key, value]) => value.count > 0) //count가 0인지 체크
-        .sort((a, b) => a[1].rank - b[1].rank); //rank 오름차순으로 정렬
+// 지역 이름과 키워드가 주어질 때 장소를 검색하는 함수
+async function searchKeywordWithLocation(locationName, result, radius, keyword) {
+    let result_list = [];
+    try {
+        // 지역 이름을 기반으로 위치 좌표를 검색
+        const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${locationName}&key=${googleMapApiKey}`;
+        const geoResponse = await axios.get(geocodeUrl);
+        const location = geoResponse.data.results[0].geometry.location;
 
-    while (sortedKeywords.length > 0) { //위 두 조건을 만족시켜서 sortedKeywords에 들어있음
-
-        let keywordFound = false;
-
-        for (const [key, value] of sortedKeywords) {
-            if (value.count === 0) {
-                continue; // count가 0인 키워드는 건너뛰기
-            }
-
-            for (const keyword of value.keywords) {
-                if (value.count === 0) {
-                    break; // count가 0이면 종료
+        // 좌표와 키워드를 사용하여 장소를 검색
+        const placesUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location.lat},${location.lng}&radius=${radius}&keyword=${keyword}&key=${googleMapApiKey}&language=ko`;
+        const placesResponse = await axios.get(placesUrl);
+        const places = placesResponse.data.results;
+        if (places.length > 0) {
+            for (const place of places) {
+                const rating = place.rating || 0;
+                // place_id가 이미 result 배열에 있는지 확인
+                if (rating >= 1 && !result.find(result => result.place_id === place.place_id)) {
+                    // 결과 배열에 장소 이름, 별점, 위도, 경도, 주소, 그리고 place_id 저장
+                    result_list.push({
+                        result_value: 1,
+                        name: place.name,
+                        rating: place.rating,
+                        latitude: place.geometry.location.lat,
+                        longitude: place.geometry.location.lng,
+                        address: place.vicinity,
+                        place_id: place.place_id
+                    });
+                    return result_list;
                 }
-                if (await searchKeyword(keyword)) {
-                    value.count--; //카운트 감소
-                    keywordFound = true;
-                    break;
-                }
             }
+        } else {
+            result_list.push({
+                result_value: 0
+            });
         }
-
-        //5km증가시길때 조건을 잘따져야함
-        if (!keywordFound) {
-            // 결과를 찾지 못한 경우, 최하위 키워드에서 최상위로 순환
-            const lastKeyword = sortedKeywords.pop();
-            sortedKeywords.unshift(lastKeyword);
-        }
-
-        const allCountsZero = sortedKeywords.every(([key, value]) => value.count === 0);
-        if (allCountsZero) {
-            // 모든 count가 0이면 반복 종료
-            break;
-        }
-
+    } catch (error) {
+        result_list.push({
+            result_value: 0
+        });
+        console.error(`에러 발생: ${error.message}`);
     }
+    return result_list;
 }
