@@ -1,6 +1,7 @@
 // setFoodRank 함수 사용 예
 const mongoose = require('mongoose');
-const uri = `mongodb+srv://admin:inha2023@cluster0.nv39mvs.mongodb.net/inha-graduate?retryWrites=true&w=majority`; // MongoDB Atlas 연결 URI
+require('dotenv').config();
+const uri = process.env.uri; // MongoDB Atlas 연결 URI
 mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
 const setUserFoodRank = require('./setUserFoodRank.js')
 

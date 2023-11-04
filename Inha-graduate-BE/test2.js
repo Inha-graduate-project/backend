@@ -17,5 +17,5 @@ async function fetchPersonality(userId) {
     }
 }
 
-const userId = 11112; // 원하는 user_id 입력
+const userId = 11111; // 원하는 user_id 입력
 fetchPersonality(userId);

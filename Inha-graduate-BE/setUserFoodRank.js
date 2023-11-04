@@ -1,7 +1,4 @@
 // 사용자의 음식 우선순위를 바탕으로 여행지 추천 갯수를 계산하는 함수
-const mongoose = require('mongoose');
-const uri = `mongodb+srv://admin:inha2023@cluster0.nv39mvs.mongodb.net/inha-graduate?retryWrites=true&w=majority`; // MongoDB Atlas 연결 URI
-mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
 const Personalities = require('./personalities-definition.js');
 
 async function setUserFoodRank(userId) {
@@ -74,10 +71,19 @@ async function setUserFoodRank(userId) {
             }
         }
 
+        const keywords = { // 음식점 키워드
+            rank_koreanfood: ['한식'],
+            rank_japanesefood: ['일식'],
+            rank_chinesefood: ['중식'],
+            rank_westernfood: ['양식'],
+            rank_fastfood: ['패스트푸드'],
+            rank_meat: ['구이']
+        };
+
         let result = {}; // 음식점 개수 및 rank를 저장하는 result
         for (let i = 0; i < foodTypes.length; i++) { // 음식점 개수 및 rank 저장
             let type = foodTypes[i];
-            result[type] = { count: counts[type], rank: user[type] };
+            result[type] = { count: counts[type], rank: user[type], keywords: keywords[type] };
         }
 
         return result;
