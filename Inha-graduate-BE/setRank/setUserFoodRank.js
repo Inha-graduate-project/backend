@@ -1,5 +1,5 @@
 // 사용자의 음식 우선순위를 바탕으로 여행지 추천 갯수를 계산하는 함수
-const Personalities = require('./personalities-definition.js');
+const Personalities = require('../DB/personalities-definition.js');
 
 async function setUserFoodRank(userId) {
     try {
