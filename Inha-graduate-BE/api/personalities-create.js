@@ -1,5 +1,5 @@
 // personality collection에 데이터 삽입
-const Personalities = require('./personalities-definition');
+const Personalities = require('../DB/personalities-definition');
 
 function savePersonality(req, res) {
     const userData = req.body; // 클라이언트로부터 받은 데이터를 userData 변수에 저장

@@ -1,14 +1,11 @@
 const axios = require('axios'); //json을 받아오기 위함
 require('dotenv').config();
 
-const Personalities = require('./personalities-definition.js');
-//const Informations = require('./informations-definition');
-//const mongoose = require('mongoose');
+const Personalities = require('../DB/personalities-definition.js');
 const uri = process.env.uri; // MongoDB Atlas 연결 URI
-const setUserDestinationRank = require('./setUserDestinationRank.js') // 여행지 추천 갯수를 가져오는 모듈
-const setUserFoodRank = require('./setUserFoodRank.js'); // 음식 추천 갯수를 가져오는 모듈
-const setUserAccommodationRank = require('./setUserAccommodationRank.js');
-//mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
+const setUserDestinationRank = require('../setRank/setUserDestinationRank.js') // 여행지 추천 갯수를 가져오는 모듈
+const setUserFoodRank = require('../setRank/setUserFoodRank.js'); // 음식 추천 갯수를 가져오는 모듈
+const setUserAccommodationRank = require('../setRank/setUserAccommodationRank.js'); // 숙박시설 추천 갯수를 가져오는 모듈
 const googleMapApiKey = process.env.googleMapApiKey;
 
 async function selectDestination(userId) {
@@ -34,7 +31,7 @@ async function selectDestination(userId) {
         const startpoint_places = startpoint_response.data.candidates; // 시작 장소 정보를 가져오는 값
         const startpoint_location = startpoint_places[0].geometry.location; // 시작 위치 위도/경도 정보
         const startpoint_address = startpoint_places[0].formatted_address; // 시작 위치 주소 정보
-        console.log(`Latitude: ${startpoint_location.lat}, Longitude: ${startpoint_location.lng}`);
+        //console.log(`Latitude: ${startpoint_location.lat}, Longitude: ${startpoint_location.lng}`);
         let latitude = startpoint_location.lat // 시작 좌표 위도
         let longitude = startpoint_location.lng // 시작 좌표 경도
         let radius = 5000; // 반경 5km
@@ -82,7 +79,7 @@ async function selectDestination(userId) {
                             value.count--; // 해당 여행 카테고리의 count 1 감소
                             results.push({ // 여행지 값 저장
                                 seq: seq_value, day: 1, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "여행지", place_id: searchvalue[0].place_id
                             })
                             seq_value = seq_value + 1; // 시퀀스 번호 증가
                             break; // for문 종료
@@ -96,7 +93,7 @@ async function selectDestination(userId) {
                                     value.count--; // 해당 여행 카테고리의 count 1 감소
                                     results.push({ // 여행지 값 저장
                                         seq: seq_value, day: 1, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "여행지", place_id: searchvalue[0].place_id
                                     })
                                     seq_value = seq_value + 1; // 시퀀스 값 증가
                                     radius = 5000; // 여행지 검색 반경을 5km로 다시 복귀
@@ -127,7 +124,7 @@ async function selectDestination(userId) {
                             value.count--; // 해당 여행 카테고리의 count 1 감소
                             results.push({ // 음식점 값 저장
                                 seq: seq_value, day: 1, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "음식점", place_id: searchvalue[0].place_id
                             })
                             seq_value = seq_value + 1; // 시퀀스 값 증가
                             break; // for문 종료
@@ -141,7 +138,7 @@ async function selectDestination(userId) {
                                     value.count--; // 해당 여행 카테고리의 count 1 감소
                                     results.push({ // 음식점 값 저장
                                         seq: seq_value, day: 1, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "음식점", place_id: searchvalue[0].place_id
                                     })
                                     seq_value = seq_value + 1; // 시퀀스 값 증가
                                     radius = 5000; // 음식점 검색 반경을 5km로 다시 복귀
@@ -183,7 +180,7 @@ async function selectDestination(userId) {
                             value.count--; // 해당 여행 카테고리의 count 1 감소
                             results.push({ // 여행지 값 저장
                                 seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "여행지", place_id: searchvalue[0].place_id
                             })
                             seq_value = seq_value + 1; // 시퀀스 번호 증가
                             break; // for문 종료
@@ -197,7 +194,7 @@ async function selectDestination(userId) {
                                     value.count--; // 해당 여행 카테고리의 count 1 감소
                                     results.push({ // 여행지 값 저장
                                         seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "여행지", place_id: searchvalue[0].place_id
                                     })
                                     seq_value = seq_value + 1; // 시퀀스 값 증가
                                     radius = 5000; // 여행지 검색 반경을 5km로 다시 복귀
@@ -231,7 +228,7 @@ async function selectDestination(userId) {
                             value.count--; // 해당 여행 카테고리의 count 1 감소
                             results.push({ // 음식점 값 저장
                                 seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "음식점", place_id: searchvalue[0].place_id
                             })
                             seq_value = seq_value + 1; // 시퀀스 값 증가
                             break; // for문 종료
@@ -245,7 +242,7 @@ async function selectDestination(userId) {
                                     value.count--; // 해당 여행 카테고리의 count 1 감소
                                     results.push({ // 음식점 값 저장
                                         seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "음식점", place_id: searchvalue[0].place_id
                                     })
                                     seq_value = seq_value + 1; // 시퀀스 값 증가
                                     radius = 5000; // 음식점 검색 반경을 5km로 다시 복귀
@@ -279,7 +276,7 @@ async function selectDestination(userId) {
                             value.count--; // 해당 숙소 카테고리의 count 1 감소
                             results.push({ // 숙소 값 저장
                                 seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "숙소", place_id: searchvalue[0].place_id
                             })
                             seq_value = seq_value + 1; // 시퀀스 값 증가
                             break; // for문 종료
@@ -293,7 +290,7 @@ async function selectDestination(userId) {
                                     value.count--; // 해당 숙소 카테고리의 count 1 감소
                                     results.push({ // 숙소 값 저장
                                         seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "숙소", place_id: searchvalue[0].place_id
                                     })
                                     seq_value = seq_value + 1; // 시퀀스 값 증가
                                     radius = 5000; // 숙소 검색 반경을 5km로 다시 복귀
@@ -330,7 +327,7 @@ async function selectDestination(userId) {
                                 longitude = searchvalue[0].longitude; // 중심좌표 경도 수정(2번째 날의 첫번째 여행지로)
                                 results.push({ // 여행지 값 저장
                                     seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                    longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                    longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "여행지", place_id: searchvalue[0].place_id
                                 })
                                 seq_value = seq_value + 1; // 시퀀스 번호 증가
                                 break; // for문 종료
@@ -346,7 +343,7 @@ async function selectDestination(userId) {
                                         longitude = searchvalue[0].longitude; // 중심좌표 경도 수정(2번째 날의 첫번째 여행지로)
                                         results.push({ // 여행지 값 저장
                                             seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                            longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                            longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "여행지", place_id: searchvalue[0].place_id
                                         })
                                         seq_value = seq_value + 1; // 시퀀스 값 증가
                                         radius = 5000; // 여행지 검색 반경을 5km로 다시 복귀
@@ -368,7 +365,7 @@ async function selectDestination(userId) {
                                 value.count--; // 해당 여행 카테고리의 count 1 감소
                                 results.push({ // 여행지 값 저장
                                     seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                    longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                    longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "여행지", place_id: searchvalue[0].place_id
                                 })
                                 seq_value = seq_value + 1; // 시퀀스 번호 증가
                                 break; // for문 종료
@@ -382,7 +379,7 @@ async function selectDestination(userId) {
                                         value.count--; // 해당 여행 카테고리의 count 1 감소
                                         results.push({ // 여행지 값 저장
                                             seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                            longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                            longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "여행지", place_id: searchvalue[0].place_id
                                         })
                                         seq_value = seq_value + 1; // 시퀀스 값 증가
                                         radius = 5000; // 여행지 검색 반경을 5km로 다시 복귀
@@ -414,7 +411,7 @@ async function selectDestination(userId) {
                             value.count--; // 해당 여행 카테고리의 count 1 감소
                             results.push({ // 음식점 값 저장
                                 seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "음식점", place_id: searchvalue[0].place_id
                             })
                             seq_value = seq_value + 1; // 시퀀스 값 증가
                             break; // for문 종료
@@ -428,7 +425,7 @@ async function selectDestination(userId) {
                                     value.count--; // 해당 여행 카테고리의 count 1 감소
                                     results.push({ // 음식점 값 저장
                                         seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "음식점", place_id: searchvalue[0].place_id
                                     })
                                     seq_value = seq_value + 1; // 시퀀스 값 증가
                                     radius = 5000; // 음식점 검색 반경을 5km로 다시 복귀
@@ -473,7 +470,7 @@ async function selectDestination(userId) {
                             value.count--; // 해당 여행 카테고리의 count 1 감소
                             results.push({ // 여행지 값 저장
                                 seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "여행지", place_id: searchvalue[0].place_id
                             })
                             seq_value = seq_value + 1; // 시퀀스 번호 증가
                             break; // for문 종료
@@ -487,7 +484,7 @@ async function selectDestination(userId) {
                                     value.count--; // 해당 여행 카테고리의 count 1 감소
                                     results.push({ // 여행지 값 저장
                                         seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "여행지", place_id: searchvalue[0].place_id
                                     })
                                     seq_value = seq_value + 1; // 시퀀스 값 증가
                                     radius = 5000; // 여행지 검색 반경을 5km로 다시 복귀
@@ -521,7 +518,7 @@ async function selectDestination(userId) {
                             value.count--; // 해당 여행 카테고리의 count 1 감소
                             results.push({ // 음식점 값 저장
                                 seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "음식점", place_id: searchvalue[0].place_id
                             })
                             seq_value = seq_value + 1; // 시퀀스 값 증가
                             break; // for문 종료
@@ -535,7 +532,7 @@ async function selectDestination(userId) {
                                     value.count--; // 해당 여행 카테고리의 count 1 감소
                                     results.push({ // 음식점 값 저장
                                         seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "음식점", place_id: searchvalue[0].place_id
                                     })
                                     seq_value = seq_value + 1; // 시퀀스 값 증가
                                     radius = 5000; // 음식점 검색 반경을 5km로 다시 복귀
@@ -569,7 +566,7 @@ async function selectDestination(userId) {
                             value.count--; // 해당 숙소 카테고리의 count 1 감소
                             results.push({ // 숙소 값 저장
                                 seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "숙소", place_id: searchvalue[0].place_id
                             })
                             seq_value = seq_value + 1; // 시퀀스 값 증가
                             break; // for문 종료
@@ -583,7 +580,7 @@ async function selectDestination(userId) {
                                     value.count--; // 해당 숙소 카테고리의 count 1 감소
                                     results.push({ // 숙소 값 저장
                                         seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "숙소", place_id: searchvalue[0].place_id
                                     })
                                     seq_value = seq_value + 1; // 시퀀스 값 증가
                                     radius = 5000; // 숙소 검색 반경을 5km로 다시 복귀
@@ -620,7 +617,7 @@ async function selectDestination(userId) {
                                 longitude = searchvalue[0].longitude; // 중심좌표 경도 수정(2번째 날의 첫번째 여행지로)
                                 results.push({ // 여행지 값 저장
                                     seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                    longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                    longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "여행지", place_id: searchvalue[0].place_id
                                 })
                                 seq_value = seq_value + 1; // 시퀀스 번호 증가
                                 break; // for문 종료
@@ -636,7 +633,7 @@ async function selectDestination(userId) {
                                         longitude = searchvalue[0].longitude; // 중심좌표 경도 수정(2번째 날의 첫번째 여행지로)
                                         results.push({ // 여행지 값 저장
                                             seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                            longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                            longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "여행지", place_id: searchvalue[0].place_id
                                         })
                                         seq_value = seq_value + 1; // 시퀀스 값 증가
                                         radius = 5000; // 여행지 검색 반경을 5km로 다시 복귀
@@ -658,7 +655,7 @@ async function selectDestination(userId) {
                                 value.count--; // 해당 여행 카테고리의 count 1 감소
                                 results.push({ // 여행지 값 저장
                                     seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                    longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                    longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "여행지", place_id: searchvalue[0].place_id
                                 })
                                 seq_value = seq_value + 1; // 시퀀스 번호 증가
                                 break; // for문 종료
@@ -672,7 +669,7 @@ async function selectDestination(userId) {
                                         value.count--; // 해당 여행 카테고리의 count 1 감소
                                         results.push({ // 여행지 값 저장
                                             seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                            longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                            longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "여행지", place_id: searchvalue[0].place_id
                                         })
                                         seq_value = seq_value + 1; // 시퀀스 값 증가
                                         radius = 5000; // 여행지 검색 반경을 5km로 다시 복귀
@@ -707,7 +704,7 @@ async function selectDestination(userId) {
                             value.count--; // 해당 여행 카테고리의 count 1 감소
                             results.push({ // 음식점 값 저장
                                 seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "음식점", place_id: searchvalue[0].place_id
                             })
                             seq_value = seq_value + 1; // 시퀀스 값 증가
                             break; // for문 종료
@@ -721,7 +718,7 @@ async function selectDestination(userId) {
                                     value.count--; // 해당 여행 카테고리의 count 1 감소
                                     results.push({ // 음식점 값 저장
                                         seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "음식점", place_id: searchvalue[0].place_id
                                     })
                                     seq_value = seq_value + 1; // 시퀀스 값 증가
                                     radius = 5000; // 음식점 검색 반경을 5km로 다시 복귀
@@ -755,7 +752,7 @@ async function selectDestination(userId) {
                             value.count--; // 해당 숙소 카테고리의 count 1 감소
                             results.push({ // 숙소 값 저장
                                 seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "숙소", place_id: searchvalue[0].place_id
                             })
                             seq_value = seq_value + 1; // 시퀀스 값 증가
                             break; // for문 종료
@@ -769,7 +766,7 @@ async function selectDestination(userId) {
                                     value.count--; // 해당 숙소 카테고리의 count 1 감소
                                     results.push({ // 숙소 값 저장
                                         seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "숙소", place_id: searchvalue[0].place_id
                                     })
                                     seq_value = seq_value + 1; // 시퀀스 값 증가
                                     radius = 5000; // 숙소 검색 반경을 5km로 다시 복귀
@@ -806,7 +803,7 @@ async function selectDestination(userId) {
                                 longitude = searchvalue[0].longitude; // 중심좌표 경도 수정(2번째 날의 첫번째 여행지로)
                                 results.push({ // 여행지 값 저장
                                     seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                    longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                    longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "여행지", place_id: searchvalue[0].place_id
                                 })
                                 seq_value = seq_value + 1; // 시퀀스 번호 증가
                                 break; // for문 종료
@@ -822,7 +819,7 @@ async function selectDestination(userId) {
                                         longitude = searchvalue[0].longitude; // 중심좌표 경도 수정(2번째 날의 첫번째 여행지로)
                                         results.push({ // 여행지 값 저장
                                             seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                            longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                            longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "여행지", place_id: searchvalue[0].place_id
                                         })
                                         seq_value = seq_value + 1; // 시퀀스 값 증가
                                         radius = 5000; // 여행지 검색 반경을 5km로 다시 복귀
@@ -844,7 +841,7 @@ async function selectDestination(userId) {
                                 value.count--; // 해당 여행 카테고리의 count 1 감소
                                 results.push({ // 여행지 값 저장
                                     seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                    longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                    longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "여행지", place_id: searchvalue[0].place_id
                                 })
                                 seq_value = seq_value + 1; // 시퀀스 번호 증가
                                 break; // for문 종료
@@ -858,7 +855,7 @@ async function selectDestination(userId) {
                                         value.count--; // 해당 여행 카테고리의 count 1 감소
                                         results.push({ // 여행지 값 저장
                                             seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                            longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                            longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "여행지", place_id: searchvalue[0].place_id
                                         })
                                         seq_value = seq_value + 1; // 시퀀스 값 증가
                                         radius = 5000; // 여행지 검색 반경을 5km로 다시 복귀
@@ -893,7 +890,7 @@ async function selectDestination(userId) {
                             value.count--; // 해당 여행 카테고리의 count 1 감소
                             results.push({ // 음식점 값 저장
                                 seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "음식점", place_id: searchvalue[0].place_id
                             })
                             seq_value = seq_value + 1; // 시퀀스 값 증가
                             break; // for문 종료
@@ -907,7 +904,7 @@ async function selectDestination(userId) {
                                     value.count--; // 해당 여행 카테고리의 count 1 감소
                                     results.push({ // 음식점 값 저장
                                         seq: seq_value, day: day, name: searchvalue[0].name, rating: searchvalue[0].rating, latitude: searchvalue[0].latitude,
-                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, place_id: searchvalue[0].place_id
+                                        longitude: searchvalue[0].longitude, address: searchvalue[0].address, type: "음식점", place_id: searchvalue[0].place_id
                                     })
                                     seq_value = seq_value + 1; // 시퀀스 값 증가
                                     radius = 5000; // 음식점 검색 반경을 5km로 다시 복귀

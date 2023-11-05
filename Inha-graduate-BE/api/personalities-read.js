@@ -1,5 +1,5 @@
 // personality 컬렉션 데이터 조회(read)
-const Personalities = require('./personalities-definition');
+const Personalities = require('../DB/personalities-definition');
 
 async function readPersonality(req, res) { // 비동기적 동작
     const userId = req.params.user_id; // 요청에서 user_id 파라미터를 가져오기

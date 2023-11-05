@@ -1,5 +1,5 @@
 // 사용자의 숙박시설 우선순위를 바탕으로 여행지 추천 갯수를 계산하는 함수
-const Personalities = require('./personalities-definition.js');
+const Personalities = require('../DB/personalities-definition');
 
 async function setUserAccommodationRank(userId) {
     try {
